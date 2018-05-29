@@ -1,6 +1,10 @@
+var express = require('express');
 var mongoose = require("mongoose");
 var User = require('../models/UserModel.js');
-
+var ipfsAPI = require('ipfs-api');
+var ipfs = ipfsAPI('localhost', '5001', {protocol: 'http'});
+var fs = require('fs');
+var buffer=require('buffer');
 // Create and Save a new User
 exports.create = (req, res) => {
   // Validate request
@@ -21,7 +25,7 @@ const user = new User({
   content:req.body.content
 });
 
-  // Save Note in the database
+  // Save User in the database
   user.save().then(data => {
     res.send({"status":"200","message":"Successfully user created","data":data});
 }).catch(err => {
@@ -87,4 +91,36 @@ exports.userDelete=(req,res)=>{
       message: "Could not delete user with id " + req.params.userId
   });
   })
-}
+};
+
+exports.userFile=(req,res)=>{
+  var file_base64 = req.body.file_upload;
+  console.log(file_base64);
+  var fileExt=req.body.extention;
+  binaryData = new Buffer(file_base64, 'base64');
+  fs.writeFile('public/demo.'+fileExt, binaryData, "binary", function(err) {
+    if (err) {
+      console.log("errror in writtting file")
+      }
+      else{
+        fs.readFile('public/demo.'+fileExt, function(err, data) {  
+          if (err){ 
+            return res.send({"message":"Error in file reading","error":err});
+          }
+          else{
+          ipfs.files.add(data, (err, result) => { // Upload buffer to IPFS
+            if(err) {
+              console.error(err)
+              return res.send({"message":"Error in file upload to ipfs","error":err});
+            }
+            let url = `https://ipfs.io/ipfs/${result[0].hash}`;
+            console.log(`Url --> ${url}`);
+            return res.send({"message":"file uploaded successfully","hash":result[0].hash});
+          })
+        }
+        });
+      }
+  });
+  
+
+};

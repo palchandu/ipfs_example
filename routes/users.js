@@ -1,5 +1,6 @@
 var express = require('express');
 var router = express.Router();
+
 const users = require('../controllers/UserController.js');
 
 /* GET users listing. */
@@ -18,5 +19,8 @@ router.get('/userDetails/:userId',users.findByUserId);
 
 /*Routes to delete single user */
 router.get('/userRemove/:userId',users.userDelete);
+
+/*Routes to upload  user file */
+router.post('/addUserFile',users.userFile);
 
 module.exports = router;
